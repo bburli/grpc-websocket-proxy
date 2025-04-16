@@ -176,8 +176,16 @@ func (p *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 			"Sec-WebSocket-Protocol": []string{"Bearer"},
 		}
 	} else if strings.HasPrefix(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth") {
+		// split and add the token to the header
+		tokens := strings.SplitN(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth,", 3)
+		if len(tokens) < 2 {
+			p.logger.Warnln("error parsing Sec-WebSocket-Protocol:", r.Header.Get("Sec-WebSocket-Protocol"))
+			return
+		}
+		token := strings.Trim(tokens[1], " ")
+		session := strings.Trim(tokens[2], " ")
 		responseHeader = http.Header{
-			"Sec-WebSocket-Protocol": []string{"SukiAuth"},
+			"Sec-WebSocket-Protocol": []string{"SukiAuth", token, session},
 		}
 	}
 
