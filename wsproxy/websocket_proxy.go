@@ -130,9 +130,12 @@ func defaultHeaderForwarder(header string) bool {
 // The cookie name is specified by the TokenCookieName value.
 //
 // example:
-//   Sec-Websocket-Protocol: Bearer, foobar
+//
+//	Sec-Websocket-Protocol: Bearer, foobar
+//
 // is converted to:
-//   Authorization: Bearer foobar
+//
+//	Authorization: Bearer foobar
 //
 // Method can be overwritten with the MethodOverrideParam get parameter in the requested URL
 func WebsocketProxy(h http.Handler, opts ...Option) http.Handler {
@@ -172,7 +175,12 @@ func (p *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 		responseHeader = http.Header{
 			"Sec-WebSocket-Protocol": []string{"Bearer"},
 		}
+	} else if strings.HasPrefix(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth") {
+		responseHeader = http.Header{
+			"Sec-WebSocket-Protocol": []string{"SukiAuth"},
+		}
 	}
+
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
 		p.logger.Warnln("error upgrading websocket:", err)
@@ -329,7 +337,13 @@ func transformSubProtocolHeader(header string) string {
 	tokens := strings.SplitN(header, "Bearer,", 2)
 
 	if len(tokens) < 2 {
-		return ""
+		// now check client is using SukiAuth
+		tokens = strings.SplitN(header, "SukiAuth,", 3)
+		if len(tokens) < 2 {
+			return ""
+		}
+
+		return fmt.Sprintf("SukiAuth %v %v", strings.Trim(tokens[1], " "), strings.Trim(tokens[2], " "))
 	}
 
 	return fmt.Sprintf("Bearer %v", strings.Trim(tokens[1], " "))
