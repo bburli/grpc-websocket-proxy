@@ -23,6 +23,11 @@ var MethodOverrideParam = "method"
 // Deprecated: it is preferable to use the Options parameters to WebSocketProxy to supply parameters.
 var TokenCookieName = "token"
 
+// SukiAmbientAuth is the subprotocol for ambient auth.
+// Because websocket headers are not sent to the server, we need to send the token and session id in the subprotocol.
+// The subprotocol is of the form: SukiAmbientAuth <token> <session_id>
+var SukiAmbientAuthHeader = "SukiAmbientAuth"
+
 // RequestMutatorFunc can supply an alternate outgoing request.
 type RequestMutatorFunc func(incoming *http.Request, outgoing *http.Request) *http.Request
 
@@ -175,7 +180,7 @@ func (p *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 		responseHeader = http.Header{
 			"Sec-WebSocket-Protocol": []string{"Bearer"},
 		}
-	} else if strings.HasPrefix(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth") {
+	} else if strings.HasPrefix(r.Header.Get("Sec-WebSocket-Protocol"), SukiAmbientAuthHeader) {
 		// split and add the token to the header
 		tokens := strings.SplitN(r.Header.Get("Sec-WebSocket-Protocol"), " ", 3)
 		if len(tokens) < 3 {
@@ -185,7 +190,7 @@ func (p *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 		token := strings.Trim(tokens[1], " ")
 		session := strings.Trim(tokens[2], " ")
 		responseHeader = http.Header{
-			"Sec-WebSocket-Protocol": []string{"SukiAuth", token, session},
+			"Sec-WebSocket-Protocol": []string{SukiAmbientAuthHeader, token, session},
 		}
 	}
 
