@@ -177,8 +177,8 @@ func (p *Proxy) proxy(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if strings.HasPrefix(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth") {
 		// split and add the token to the header
-		tokens := strings.SplitN(r.Header.Get("Sec-WebSocket-Protocol"), "SukiAuth,", 3)
-		if len(tokens) < 2 {
+		tokens := strings.SplitN(r.Header.Get("Sec-WebSocket-Protocol"), " ", 3)
+		if len(tokens) < 3 {
 			p.logger.Warnln("error parsing Sec-WebSocket-Protocol:", r.Header.Get("Sec-WebSocket-Protocol"))
 			return
 		}
